@@ -1,4 +1,5 @@
 import livro from '../models/livro.js';
+import {autor} from '../models/autor.js';
 
 class LivroController {
     
@@ -7,9 +8,9 @@ class LivroController {
             const listaLivros = await livro.find({});
             res.status(200).json(listaLivros);
         }
-        catch{
+        catch(erro){
             res.status(500).json({
-                message: `${error.message} - falha na requisição`
+                message: `${erro.message} - falha na requisição`
             });
         }
     };
@@ -30,24 +31,27 @@ class LivroController {
             await livro.findByIdAndUpdate(id, req.body);
             res.status(200).json({message: 'Livro atualizado com sucesso'});
         }
-        catch{
+        catch(erro){
             res.status(500).json({
-                message: `${error.message} - falha na atualização do livro`
+                message: `${erro.message} - falha na atualização do livro`
             });
         }
     };
 
     static async cadastrarLivro (req, res) {
+        const novoLivro = req.body;
         try{
-            const novoLivro = await livro.create(req.body);
+            const autorEncontrado = await autor.findById(novoLivro.autor);
+            const livroCompleto = {...novoLivro, autor: {...autorEncontrado._doc}};
+            const livroCriado = await livro.create(livroCompleto);
             res.status(201).json({
                 message: 'Livro cadastrado com sucesso',
-                livro: novoLivro
+                livro: livroCriado
             });
         }
-        catch (error){
+        catch (erro){
             res.status(500).json({
-                message: `${error.message} - falha ao cadastrar livro`
+                message: `${erro.message} - falha ao cadastrar livro`
             });
         }
     }
@@ -61,6 +65,17 @@ class LivroController {
             res.status(500).json({ message: `${erro.message} - falha na exclusão` });
           }
     };
+
+    static async listarLivrosPorEditora(req, res) {
+        const editora = req.query.editora;
+        try {
+            const livrosPorEditora = await livro.find({editora: editora});
+            res.status(200).json(livrosPorEditora);
+        } catch (erro) {
+            res.status(500).json({ message: `${erro.message} - falha na busca`
+            });
+        }
+    }
 }
 
 export default LivroController;
